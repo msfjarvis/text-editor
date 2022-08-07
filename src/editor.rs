@@ -34,9 +34,8 @@ impl Editor {
 
     fn process_keypress(&mut self) -> Result<(), io::Error> {
         let pressed_key = Terminal::read_key()?;
-        match pressed_key {
-            Key::Ctrl('q') => self.should_quit = true,
-            _ => (),
+        if let Key::Ctrl('q') = pressed_key {
+            self.should_quit = true;
         };
         Ok(())
     }

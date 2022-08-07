@@ -6,3 +6,4 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.60"
 termion = "1.5.6"
+unicode-segmentation = "1.9.0"

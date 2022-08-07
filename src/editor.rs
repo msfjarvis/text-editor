@@ -1,4 +1,4 @@
-use std::io::{self, stdout};
+use std::io::{self, stdout, Write};
 use std::result::Result;
 use termion::{event::Key, input::TermRead, raw::IntoRawMode};
 
@@ -11,12 +11,15 @@ impl Editor {
     pub fn run(&mut self) {
         let _stdout = stdout().into_raw_mode().unwrap();
         loop {
-            if let Err(error) = self.process_keypress() {
+            if let Err(error) = self.refresh_screen() {
                 panic!("{}", error);
             };
             if self.should_quit {
                 break;
             }
+            if let Err(error) = self.process_keypress() {
+                panic!("{}", error);
+            };
         }
     }
 
@@ -27,6 +30,11 @@ impl Editor {
             _ => (),
         };
         Ok(())
+    }
+
+    fn refresh_screen(&self) -> Result<(), io::Error> {
+        print!("{}", termion::clear::All);
+        io::stdout().flush()
     }
 }
 

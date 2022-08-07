@@ -1,5 +1,6 @@
 use crate::Position;
 use std::io::{self, stdout, Error, Write};
+use termion::color::{Bg, Reset, Rgb};
 use termion::event::Key;
 use termion::input::TermRead;
 use termion::raw::{IntoRawMode, RawTerminal};
@@ -65,5 +66,13 @@ impl Terminal {
 
     pub fn show_cursor() {
         print!("{}", termion::cursor::Show);
+    }
+
+    pub fn set_bg_color(color: Rgb) {
+        print!("{}", Bg(color));
+    }
+
+    pub fn reset_bg_color() {
+        print!("{}", Bg(Reset));
     }
 }

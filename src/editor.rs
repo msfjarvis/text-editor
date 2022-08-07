@@ -1,10 +1,12 @@
 use crate::{Document, Row, Terminal};
 use std::result::Result;
 use std::{env, io};
+use termion::color::Rgb;
 use termion::event::Key;
 
 const NAME: &str = env!("CARGO_PKG_NAME");
 const VERSION: &str = env!("CARGO_PKG_VERSION");
+const STATUS_BG_COLOR: Rgb = Rgb(26, 28, 30);
 
 pub struct Editor {
     should_quit: bool,
@@ -80,6 +82,8 @@ impl Editor {
             println!("Goodbye.\r");
         } else {
             self.draw_rows();
+            self.draw_status_bar();
+            self.draw_message_bar();
             Terminal::reposition_cursor(&Position {
                 x: self.cursor_position.x.saturating_sub(self.offset.x),
                 y: self.cursor_position.y.saturating_sub(self.offset.y),
@@ -202,6 +206,17 @@ impl Editor {
             x = width;
         };
         self.cursor_position = Position { x, y }
+    }
+
+    fn draw_status_bar(&self) {
+        let spaces = " ".repeat(self.terminal.size().width as usize);
+        Terminal::set_bg_color(STATUS_BG_COLOR);
+        println!("{}\r", spaces);
+        Terminal::reset_bg_color();
+    }
+
+    fn draw_message_bar(&self) {
+        Terminal::clear_current_line();
     }
 }
 

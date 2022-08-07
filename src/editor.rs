@@ -217,7 +217,8 @@ impl Editor {
             file_name = filename.to_string();
             file_name.truncate(20);
         }
-        status = format!("{}", file_name);
+        let position = format!("({},{})", self.cursor_position.x, self.cursor_position.y);
+        status = format!("{} {}", file_name, position);
         if width > status.len() {
             status.push_str(&" ".repeat(width - status.len()));
         }

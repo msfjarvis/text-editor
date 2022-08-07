@@ -1,5 +1,5 @@
-use anyhow::Result;
 use std::io::{self, stdout};
+use std::result::Result;
 use termion::{event::Key, input::TermRead, raw::IntoRawMode};
 
 #[derive(Default)]
@@ -20,7 +20,7 @@ impl Editor {
         }
     }
 
-    fn process_keypress(&mut self) -> Result<()> {
+    fn process_keypress(&mut self) -> Result<(), io::Error> {
         let pressed_key = read_key()?;
         match pressed_key {
             Key::Ctrl('q') => self.should_quit = true,
@@ -30,7 +30,7 @@ impl Editor {
     }
 }
 
-fn read_key() -> std::result::Result<Key, std::io::Error> {
+fn read_key() -> Result<Key, io::Error> {
     loop {
         if let Some(key) = io::stdin().lock().keys().next() {
             return key;

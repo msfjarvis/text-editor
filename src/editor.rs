@@ -33,7 +33,7 @@ impl Editor {
     }
 
     fn refresh_screen(&self) -> Result<(), io::Error> {
-        print!("{}", termion::clear::All);
+        print!("{}{}", termion::clear::All, termion::cursor::Goto(1, 1));
         io::stdout().flush()
     }
 }

@@ -33,6 +33,10 @@ impl Terminal {
         print!("{}", termion::clear::All);
     }
 
+    pub fn clear_current_line() {
+        print!("{}", termion::clear::CurrentLine);
+    }
+
     pub fn reposition_cursor(x: u16, y: u16) {
         let x = x.saturating_add(1);
         let y = y.saturating_add(1);

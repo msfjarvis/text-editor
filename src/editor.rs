@@ -9,6 +9,13 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 pub struct Editor {
     should_quit: bool,
     terminal: Terminal,
+    cursor_position: Position,
+}
+
+#[derive(Default)]
+pub struct Position {
+    pub x: usize,
+    pub y: usize,
 }
 
 impl Default for Editor {
@@ -16,6 +23,7 @@ impl Default for Editor {
         Self {
             should_quit: false,
             terminal: Terminal::default().expect("Failed to initialize terminal"),
+            cursor_position: Position::default(),
         }
     }
 }
@@ -45,13 +53,13 @@ impl Editor {
 
     fn refresh_screen(&self) -> Result<(), io::Error> {
         Terminal::hide_cursor();
-        Terminal::reposition_cursor(0, 0);
+        Terminal::reposition_cursor(&Position::default());
         if self.should_quit {
             Terminal::clear_screen();
             println!("Goodbye.\r");
         } else {
             self.draw_rows();
-            Terminal::reposition_cursor(0, 0);
+            Terminal::reposition_cursor(&self.cursor_position);
         }
         Terminal::show_cursor();
         Terminal::flush()

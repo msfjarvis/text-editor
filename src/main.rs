@@ -1,29 +1,24 @@
-use anyhow::Result;
-use std::io::{self, stdout, Read};
-use termion::raw::IntoRawMode;
+use anyhow::{bail, Result};
+use std::io::{self, stdout};
+use termion::{event::Key, input::TermRead, raw::IntoRawMode};
 
 fn main() -> Result<()> {
     let _stdout = stdout().into_raw_mode()?;
-    for b in io::stdin().bytes() {
-        let b = b?;
-        let c = b as char;
-        if c.is_control() {
-            println!("{:?} \r", b);
-        } else {
-            println!("{:?} ({}) \r", b, c);
+    for key in io::stdin().keys() {
+        match key {
+            Ok(key) => match key {
+                Key::Char(c) => {
+                    if c.is_control() {
+                        println!("{:?} \r", c as u8);
+                    } else {
+                        println!("{:?} ({}) \r", c as u8, c);
+                    }
+                }
+                Key::Ctrl('q') => break,
+                _ => println!("{:?} \r", key),
+            },
+            Err(e) => bail!(e),
         }
-        if b == to_control_byte('q') {
-            break;
-        }
-        println!("{}", c);
     }
     Ok(())
-}
-
-/// Given a character, computes the byte sequence for Ctrl + <char>.
-/// This lets callers compare the returned byte against [io::stdin]'s
-/// output to react to control sequences.
-fn to_control_byte(c: char) -> u8 {
-    let byte = c as u8;
-    byte & 0b0001_1111
 }

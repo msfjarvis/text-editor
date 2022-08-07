@@ -12,13 +12,13 @@ impl Editor {
         let _stdout = stdout().into_raw_mode().unwrap();
         loop {
             if let Err(error) = self.refresh_screen() {
-                panic!("{}", error);
+                die(error);
             };
             if self.should_quit {
                 break;
             }
             if let Err(error) = self.process_keypress() {
-                panic!("{}", error);
+                die(error);
             };
         }
     }
@@ -44,4 +44,8 @@ fn read_key() -> Result<Key, io::Error> {
             return key;
         }
     }
+}
+
+fn die(e: std::io::Error) {
+    panic!("{}", e);
 }

@@ -1,4 +1,4 @@
-use crate::Terminal;
+use crate::{Document, Terminal};
 use std::io;
 use std::result::Result;
 use termion::event::Key;
@@ -9,6 +9,7 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 pub struct Editor {
     should_quit: bool,
     terminal: Terminal,
+    document: Document,
     cursor_position: Position,
 }
 
@@ -23,6 +24,7 @@ impl Default for Editor {
         Self {
             should_quit: false,
             terminal: Terminal::default().expect("Failed to initialize terminal"),
+            document: Document::default(),
             cursor_position: Position::default(),
         }
     }

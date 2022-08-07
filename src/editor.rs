@@ -1,4 +1,4 @@
-use crate::terminal::Terminal;
+use crate::Terminal;
 use std::io;
 use std::result::Result;
 use termion::event::Key;

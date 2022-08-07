@@ -1,10 +1,20 @@
+use crate::terminal::Terminal;
 use std::io::{self, stdout, Write};
 use std::result::Result;
 use termion::{event::Key, input::TermRead, raw::IntoRawMode};
 
-#[derive(Default)]
 pub struct Editor {
     should_quit: bool,
+    terminal: Terminal,
+}
+
+impl Default for Editor {
+    fn default() -> Self {
+        Self {
+            should_quit: false,
+            terminal: Terminal::default().expect("Failed to initialize terminal"),
+        }
+    }
 }
 
 impl Editor {

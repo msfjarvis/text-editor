@@ -7,6 +7,7 @@ use termion::event::Key;
 const NAME: &str = env!("CARGO_PKG_NAME");
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 const STATUS_BG_COLOR: Rgb = Rgb(26, 28, 30);
+const STATUS_FG_COLOR: Rgb = Rgb(225, 226, 229);
 
 pub struct Editor {
     should_quit: bool,
@@ -209,9 +210,22 @@ impl Editor {
     }
 
     fn draw_status_bar(&self) {
-        let spaces = " ".repeat(self.terminal.size().width as usize);
+        let mut status;
+        let width = self.terminal.size().width as usize;
+        let mut file_name = "[No name]".to_string();
+        if let Some(filename) = &self.document.file_name {
+            file_name = filename.to_string();
+            file_name.truncate(20);
+        }
+        status = format!("{}", file_name);
+        if width > status.len() {
+            status.push_str(&" ".repeat(width - status.len()));
+        }
+        status.truncate(width);
         Terminal::set_bg_color(STATUS_BG_COLOR);
-        println!("{}\r", spaces);
+        Terminal::set_fg_color(STATUS_FG_COLOR);
+        println!("{}\r", status);
+        Terminal::reset_fg_color();
         Terminal::reset_bg_color();
     }
 

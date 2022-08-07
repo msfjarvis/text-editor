@@ -41,6 +41,7 @@ impl Editor {
     }
 
     fn refresh_screen(&self) -> Result<(), io::Error> {
+        Terminal::hide_cursor();
         Terminal::clear_screen();
         Terminal::reposition_cursor(0, 0);
         if self.should_quit {
@@ -49,6 +50,7 @@ impl Editor {
             self.draw_rows();
             Terminal::reposition_cursor(0, 0);
         }
+        Terminal::show_cursor();
         Terminal::flush()
     }
 

@@ -1,4 +1,5 @@
 mod editor;
+mod terminal;
 
 use crate::editor::Editor;
 use anyhow::Result;

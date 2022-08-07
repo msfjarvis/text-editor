@@ -21,4 +21,12 @@ impl Row {
             .unwrap_or_default()
             .to_string()
     }
+
+    pub fn len(&self) -> usize {
+        self.contents.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.contents.is_empty()
+    }
 }

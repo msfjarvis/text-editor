@@ -1,6 +1,6 @@
 use crate::{Document, Row, Terminal};
 use std::result::Result;
-use std::time::{Instant, Duration};
+use std::time::{Duration, Instant};
 use std::{env, io};
 use termion::color::Rgb;
 use termion::event::Key;
@@ -85,6 +85,10 @@ impl Editor {
         let pressed_key = Terminal::read_key()?;
         match pressed_key {
             Key::Ctrl('q') => self.should_quit = true,
+            Key::Char(c) => {
+                self.document.insert(&self.cursor_position, c);
+                self.move_cursor(Key::Right);
+            }
             Key::Up
             | Key::Left
             | Key::Right

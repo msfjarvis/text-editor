@@ -61,4 +61,16 @@ impl Row {
         }
         self.update_len();
     }
+
+    pub fn delete(&mut self, at: usize) {
+        if at >= self.len() {
+            return;
+        } else {
+            let mut result: String = self.contents[..].graphemes(true).take(at).collect();
+            let remainder: String = self.contents[..].graphemes(true).skip(at + 1).collect();
+            result.push_str(&remainder);
+            self.contents = result;
+        }
+        self.update_len();
+    }
 }

@@ -151,7 +151,8 @@ impl Editor {
             })?;
         }
         Terminal::show_cursor()?;
-        Terminal::flush()
+        Terminal::flush()?;
+        Ok(())
     }
 
     fn draw_welcome_message(&self) {
@@ -288,7 +289,8 @@ impl Editor {
         Terminal::set_fg_color(STATUS_FG_COLOR)?;
         println!("{}\r", status);
         Terminal::reset_fg_color()?;
-        Terminal::reset_bg_color()
+        Terminal::reset_bg_color()?;
+        Ok(())
     }
 
     fn draw_message_bar(&self) -> Result<(), Error> {

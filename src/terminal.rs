@@ -4,7 +4,7 @@ use crossterm::{
     event::{read, Event, KeyEvent},
     execute,
     style::{self, Color, ResetColor},
-    terminal::{enable_raw_mode, size, Clear, ClearType},
+    terminal::{disable_raw_mode, enable_raw_mode, size, Clear, ClearType},
 };
 use std::io::{self, stdout, Error, Write};
 
@@ -15,6 +15,13 @@ pub struct Size {
 
 pub struct Terminal {
     size: Size,
+}
+
+#[allow(unused_must_use)]
+impl Drop for Terminal {
+    fn drop(&mut self) {
+        disable_raw_mode();
+    }
 }
 
 impl Terminal {

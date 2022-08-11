@@ -118,16 +118,19 @@ impl Editor {
                     self.document.delete(&self.cursor_position);
                 }
             }
-            (KeyCode::Left, KeyModifiers::NONE)
-            | (KeyCode::Right, KeyModifiers::NONE)
-            | (KeyCode::Up, KeyModifiers::NONE)
-            | (KeyCode::Down, KeyModifiers::NONE)
-            | (KeyCode::PageUp, KeyModifiers::NONE)
-            | (KeyCode::PageDown, KeyModifiers::NONE)
-            | (KeyCode::Home, KeyModifiers::NONE)
-            | (KeyCode::End, KeyModifiers::NONE) => self.move_cursor(code),
+            (
+                KeyCode::Left
+                | KeyCode::Right
+                | KeyCode::Up
+                | KeyCode::Down
+                | KeyCode::PageUp
+                | KeyCode::PageDown
+                | KeyCode::Home
+                | KeyCode::End,
+                KeyModifiers::NONE,
+            ) => self.move_cursor(code),
             _ => (),
-        }
+        };
         self.scroll();
         Ok(())
     }

@@ -1,9 +1,12 @@
 use crate::Position;
+use crossterm::{
+    cursor::{Hide, MoveTo, Show},
+    event::{read, Event, KeyEvent},
+    execute,
+    style::{self, Color, ResetColor},
+    terminal::{enable_raw_mode, size, Clear, ClearType},
+};
 use std::io::{self, stdout, Error, Write};
-use termion::color::{Bg, Fg, Reset, Rgb};
-use termion::event::Key;
-use termion::input::TermRead;
-use termion::raw::{IntoRawMode, RawTerminal};
 
 pub struct Size {
     pub height: u16,
@@ -12,18 +15,17 @@ pub struct Size {
 
 pub struct Terminal {
     size: Size,
-    _stdout: RawTerminal<io::Stdout>,
 }
 
 impl Terminal {
     pub fn default() -> Result<Self, Error> {
-        let size = termion::terminal_size()?;
+        let (cols, rows) = size()?;
+        enable_raw_mode()?;
         Ok(Self {
             size: Size {
-                width: size.0,
-                height: size.1.saturating_sub(2),
+                width: cols,
+                height: rows.saturating_sub(2),
             },
-            _stdout: stdout().into_raw_mode()?,
         })
     }
 
@@ -31,56 +33,57 @@ impl Terminal {
         &self.size
     }
 
-    pub fn clear_screen() {
-        print!("{}", termion::clear::All);
+    pub fn clear_screen() -> Result<(), Error> {
+        execute!(stdout(), Clear(ClearType::All))
     }
 
-    pub fn clear_current_line() {
-        print!("{}", termion::clear::CurrentLine);
+    pub fn clear_current_line() -> Result<(), Error> {
+        execute!(stdout(), Clear(ClearType::CurrentLine))
     }
 
-    pub fn reposition_cursor(position: &Position) {
+    pub fn reposition_cursor(position: &Position) -> Result<(), Error> {
         let Position { mut x, mut y } = position;
         x = x.saturating_add(1);
         y = y.saturating_add(1);
         let x = x as u16;
         let y = y as u16;
-        print!("{}", termion::cursor::Goto(x, y));
+        execute!(stdout(), MoveTo(x, y))
     }
 
     pub fn flush() -> Result<(), Error> {
         io::stdout().flush()
     }
 
-    pub fn read_key() -> Result<Key, io::Error> {
+    pub fn read_key() -> Result<KeyEvent, io::Error> {
         loop {
-            if let Some(key) = io::stdin().lock().keys().next() {
-                return key;
+            let event = read()?;
+            if let Event::Key(event) = event {
+                return Ok(event);
             }
         }
     }
 
-    pub fn hide_cursor() {
-        print!("{}", termion::cursor::Hide);
+    pub fn hide_cursor() -> Result<(), Error> {
+        execute!(stdout(), Hide)
     }
 
-    pub fn show_cursor() {
-        print!("{}", termion::cursor::Show);
+    pub fn show_cursor() -> Result<(), Error> {
+        execute!(stdout(), Show)
     }
 
-    pub fn set_bg_color(color: Rgb) {
-        print!("{}", Bg(color));
+    pub fn set_bg_color(color: Color) -> Result<(), Error> {
+        execute!(stdout(), style::SetBackgroundColor(color))
     }
 
-    pub fn reset_bg_color() {
-        print!("{}", Bg(Reset));
+    pub fn reset_bg_color() -> Result<(), Error> {
+        execute!(stdout(), ResetColor)
     }
 
-    pub fn set_fg_color(color: Rgb) {
-        print!("{}", Fg(color));
+    pub fn set_fg_color(color: Color) -> Result<(), Error> {
+        execute!(stdout(), style::SetForegroundColor(color))
     }
 
-    pub fn reset_fg_color() {
-        print!("{}", Fg(Reset));
+    pub fn reset_fg_color() -> Result<(), Error> {
+        execute!(stdout(), ResetColor)
     }
 }

@@ -94,19 +94,12 @@ impl Editor {
 
     fn process_keypress(&mut self) -> Result<(), io::Error> {
         let pressed_key = Terminal::read_key()?;
-        match pressed_key {
-            KeyEvent {
-                code: KeyCode::Char('q'),
-                modifiers: KeyModifiers::CONTROL,
-                kind: _,
-                state: _,
-            } => self.should_quit = true,
-            KeyEvent {
-                code: KeyCode::Char('s'),
-                modifiers: KeyModifiers::CONTROL,
-                kind: _,
-                state: _,
-            } => {
+        let KeyEvent {
+            code, modifiers, ..
+        } = pressed_key;
+        match (code, modifiers) {
+            (KeyCode::Char('q'), KeyModifiers::CONTROL) => self.should_quit = true,
+            (KeyCode::Char('s'), KeyModifiers::CONTROL) => {
                 if self.document.save().is_ok() {
                     self.status_message =
                         StatusMessage::from("File saved successfully.".to_string());
@@ -114,75 +107,25 @@ impl Editor {
                     self.status_message = StatusMessage::from("Error writing file!".to_string());
                 }
             }
-            KeyEvent {
-                code: KeyCode::Char(c),
-                modifiers: KeyModifiers::NONE,
-                kind: _,
-                state: _,
-            } => {
+            (KeyCode::Char(c), KeyModifiers::NONE) => {
                 self.document.insert(&self.cursor_position, c);
                 self.move_cursor(KeyCode::Right);
             }
-            KeyEvent {
-                code: KeyCode::Delete,
-                modifiers: KeyModifiers::NONE,
-                kind: _,
-                state: _,
-            } => {}
-            KeyEvent {
-                code: KeyCode::Backspace,
-                modifiers: KeyModifiers::NONE,
-                kind: _,
-                state: _,
-            } => {}
-            KeyEvent {
-                code: KeyCode::Left,
-                modifiers: KeyModifiers::NONE,
-                kind: _,
-                state: _,
+            (KeyCode::Delete, KeyModifiers::NONE) => self.document.delete(&self.cursor_position),
+            (KeyCode::Backspace, KeyModifiers::NONE) => {
+                if self.cursor_position.x > 0 || self.cursor_position.y > 0 {
+                    self.move_cursor(KeyCode::Left);
+                    self.document.delete(&self.cursor_position);
+                }
             }
-            | KeyEvent {
-                code: KeyCode::Right,
-                modifiers: KeyModifiers::NONE,
-                kind: _,
-                state: _,
-            }
-            | KeyEvent {
-                code: KeyCode::Up,
-                modifiers: KeyModifiers::NONE,
-                kind: _,
-                state: _,
-            }
-            | KeyEvent {
-                code: KeyCode::Down,
-                modifiers: KeyModifiers::NONE,
-                kind: _,
-                state: _,
-            }
-            | KeyEvent {
-                code: KeyCode::PageUp,
-                modifiers: KeyModifiers::NONE,
-                kind: _,
-                state: _,
-            }
-            | KeyEvent {
-                code: KeyCode::PageDown,
-                modifiers: KeyModifiers::NONE,
-                kind: _,
-                state: _,
-            }
-            | KeyEvent {
-                code: KeyCode::Home,
-                modifiers: KeyModifiers::NONE,
-                kind: _,
-                state: _,
-            }
-            | KeyEvent {
-                code: KeyCode::End,
-                modifiers: KeyModifiers::NONE,
-                kind: _,
-                state: _,
-            } => self.move_cursor(pressed_key.code),
+            (KeyCode::Left, KeyModifiers::NONE)
+            | (KeyCode::Right, KeyModifiers::NONE)
+            | (KeyCode::Up, KeyModifiers::NONE)
+            | (KeyCode::Down, KeyModifiers::NONE)
+            | (KeyCode::PageUp, KeyModifiers::NONE)
+            | (KeyCode::PageDown, KeyModifiers::NONE)
+            | (KeyCode::Home, KeyModifiers::NONE)
+            | (KeyCode::End, KeyModifiers::NONE) => self.move_cursor(code),
             _ => (),
         }
         self.scroll();

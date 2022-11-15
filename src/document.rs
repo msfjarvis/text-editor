@@ -11,14 +11,17 @@ pub struct Document {
 }
 
 impl Document {
+    #[must_use]
     pub fn row(&self, index: usize) -> Option<&Row> {
         self.rows.get(index)
     }
 
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.rows.is_empty()
     }
 
+    #[must_use]
     pub fn len(&self) -> usize {
         self.rows.len()
     }
@@ -35,6 +38,9 @@ impl Document {
         self.rows.insert(at.y + 1, new_row);
     }
 
+    /// # Panics
+    /// This function can panic if the given Position is not
+    /// within the document's rows.
     pub fn insert(&mut self, at: &Position, c: char) {
         if c == '\n' {
             self.insert_newline(at);
@@ -54,6 +60,9 @@ impl Document {
         }
     }
 
+    /// # Panics
+    /// This function can panic if the given Position is not
+    /// within the document's rows.
     pub fn delete(&mut self, at: &Position) {
         let len = self.len();
         if at.y >= len {
@@ -69,6 +78,8 @@ impl Document {
         }
     }
 
+    /// # Errors
+    /// Returns an error if the file could not be opened.
     pub fn open(filename: &str) -> Result<Self, std::io::Error> {
         let contents = fs::read_to_string(filename)?;
         let mut rows = vec![];
@@ -81,6 +92,8 @@ impl Document {
         })
     }
 
+    /// # Errors
+    /// Returns an error if the file could not be saved.
     pub fn save(&self) -> Result<(), Error> {
         if let Some(file_name) = &self.file_name {
             let mut file = fs::File::create(file_name)?;

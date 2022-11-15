@@ -19,6 +19,7 @@ impl From<&str> for Row {
 }
 
 impl Row {
+    #[must_use]
     pub fn render(&self, start: usize, end: usize) -> String {
         let end = cmp::min(end, self.contents.len());
         let start = cmp::min(start, end);
@@ -37,10 +38,12 @@ impl Row {
         result
     }
 
+    #[must_use]
     pub fn len(&self) -> usize {
         self.len
     }
 
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.len == 0
     }
@@ -65,12 +68,11 @@ impl Row {
     pub fn delete(&mut self, at: usize) {
         if at >= self.len() {
             return;
-        } else {
-            let mut result: String = self.contents[..].graphemes(true).take(at).collect();
-            let remainder: String = self.contents[..].graphemes(true).skip(at + 1).collect();
-            result.push_str(&remainder);
-            self.contents = result;
         }
+        let mut result: String = self.contents[..].graphemes(true).take(at).collect();
+        let remainder: String = self.contents[..].graphemes(true).skip(at + 1).collect();
+        result.push_str(&remainder);
+        self.contents = result;
         self.update_len();
     }
 
@@ -79,6 +81,7 @@ impl Row {
         self.update_len();
     }
 
+    #[must_use]
     pub fn split(&mut self, at: usize) -> Self {
         let beginning: String = self.contents[..].graphemes(true).take(at).collect();
         let remainder: String = self.contents[..].graphemes(true).skip(at).collect();
@@ -87,6 +90,7 @@ impl Row {
         Self::from(&remainder[..])
     }
 
+    #[must_use]
     pub fn as_bytes(&self) -> &[u8] {
         self.contents.as_bytes()
     }

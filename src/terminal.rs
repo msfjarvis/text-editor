@@ -16,6 +16,8 @@ pub struct Terminal {
 }
 
 impl Terminal {
+    /// # Errors
+    /// Returns an error if terminal size cannot be retrieved or raw mode cannot be enabled.
     pub fn default() -> Result<Self, Error> {
         let size = termion::terminal_size()?;
         Ok(Self {
@@ -27,6 +29,7 @@ impl Terminal {
         })
     }
 
+    #[must_use]
     pub fn size(&self) -> &Size {
         &self.size
     }
@@ -39,6 +42,7 @@ impl Terminal {
         print!("{}", termion::clear::CurrentLine);
     }
 
+    #[allow(clippy::cast_possible_truncation)]
     pub fn reposition_cursor(position: &Position) {
         let Position { mut x, mut y } = position;
         x = x.saturating_add(1);
@@ -48,10 +52,14 @@ impl Terminal {
         print!("{}", termion::cursor::Goto(x, y));
     }
 
+    /// # Errors
+    /// Returns an error if stdout cannot be flushed
     pub fn flush() -> Result<(), Error> {
         io::stdout().flush()
     }
 
+    /// # Errors
+    /// Returns an error if input events can't be retrieved
     pub fn read_key() -> Result<Key, io::Error> {
         loop {
             if let Some(key) = io::stdin().lock().keys().next() {

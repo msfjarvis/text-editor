@@ -8,10 +8,8 @@ use crate::editor::Editor;
 pub use crate::editor::Position;
 pub use crate::row::Row;
 pub use crate::terminal::Terminal;
-use anyhow::Result;
 
-fn main() -> Result<()> {
+fn main() {
     let mut editor = Editor::default();
     editor.run();
-    Ok(())
 }

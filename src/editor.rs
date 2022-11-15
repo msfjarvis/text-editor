@@ -70,13 +70,13 @@ impl Editor {
     pub fn run(&mut self) {
         loop {
             if let Err(error) = self.refresh_screen() {
-                die(error);
+                die(&error);
             };
             if self.should_quit {
                 break;
             }
             if let Err(error) = self.process_keypress() {
-                die(error);
+                die(&error);
             };
         }
     }
@@ -276,7 +276,7 @@ impl Editor {
     fn draw_message_bar(&self) {
         Terminal::clear_current_line();
         let message = &self.status_message;
-        if Instant::now() - message.time < Duration::new(5, 0) {
+        if message.time.elapsed() < Duration::new(5, 0) {
             let mut text = message.text.clone();
             text.truncate(self.terminal.size().width as usize);
             print!("{}", text);
@@ -284,7 +284,7 @@ impl Editor {
     }
 }
 
-fn die(e: std::io::Error) {
+fn die(e: &std::io::Error) {
     Terminal::clear_screen();
     panic!("{}", e);
 }

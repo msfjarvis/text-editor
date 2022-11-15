@@ -1,14 +1,25 @@
 use crate::{Document, Row, Terminal};
+use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+use crossterm::style::Color;
 use std::result::Result;
 use std::time::{Duration, Instant};
-use std::{env, io};
-use termion::color::Rgb;
-use termion::event::Key;
+use std::{
+    env,
+    io::{self, Error},
+};
 
 const NAME: &str = env!("CARGO_PKG_NAME");
 const VERSION: &str = env!("CARGO_PKG_VERSION");
-const STATUS_BG_COLOR: Rgb = Rgb(26, 28, 30);
-const STATUS_FG_COLOR: Rgb = Rgb(225, 226, 229);
+const STATUS_BG_COLOR: Color = Color::Rgb {
+    r: 26,
+    g: 28,
+    b: 30,
+};
+const STATUS_FG_COLOR: Color = Color::Rgb {
+    r: 225,
+    g: 226,
+    b: 229,
+};
 
 pub struct Editor {
     should_quit: bool,
@@ -83,9 +94,12 @@ impl Editor {
 
     fn process_keypress(&mut self) -> Result<(), io::Error> {
         let pressed_key = Terminal::read_key()?;
-        match pressed_key {
-            Key::Ctrl('q') => self.should_quit = true,
-            Key::Ctrl('s') => {
+        let KeyEvent {
+            code, modifiers, ..
+        } = pressed_key;
+        match (code, modifiers) {
+            (KeyCode::Char('q'), KeyModifiers::CONTROL) => self.should_quit = true,
+            (KeyCode::Char('s'), KeyModifiers::CONTROL) => {
                 if self.document.save().is_ok() {
                     self.status_message =
                         StatusMessage::from("File saved successfully.".to_string());
@@ -93,25 +107,28 @@ impl Editor {
                     self.status_message = StatusMessage::from("Error writing file!".to_string());
                 }
             }
-            Key::Char(c) => {
+            (KeyCode::Char(c), KeyModifiers::NONE) => {
                 self.document.insert(&self.cursor_position, c);
-                self.move_cursor(Key::Right);
+                self.move_cursor(KeyCode::Right);
             }
-            Key::Delete => self.document.delete(&self.cursor_position),
-            Key::Backspace => {
+            (KeyCode::Delete, KeyModifiers::NONE) => self.document.delete(&self.cursor_position),
+            (KeyCode::Backspace, KeyModifiers::NONE) => {
                 if self.cursor_position.x > 0 || self.cursor_position.y > 0 {
-                    self.move_cursor(Key::Left);
+                    self.move_cursor(KeyCode::Left);
                     self.document.delete(&self.cursor_position);
                 }
             }
-            Key::Up
-            | Key::Left
-            | Key::Right
-            | Key::Down
-            | Key::PageUp
-            | Key::PageDown
-            | Key::Home
-            | Key::End => self.move_cursor(pressed_key),
+            (
+                KeyCode::Left
+                | KeyCode::Right
+                | KeyCode::Up
+                | KeyCode::Down
+                | KeyCode::PageUp
+                | KeyCode::PageDown
+                | KeyCode::Home
+                | KeyCode::End,
+                KeyModifiers::NONE,
+            ) => self.move_cursor(code),
             _ => (),
         };
         self.scroll();
@@ -119,22 +136,23 @@ impl Editor {
     }
 
     fn refresh_screen(&self) -> Result<(), io::Error> {
-        Terminal::hide_cursor();
-        Terminal::reposition_cursor(&Position::default());
+        Terminal::hide_cursor()?;
+        Terminal::reposition_cursor(&Position::default())?;
         if self.should_quit {
-            Terminal::clear_screen();
+            Terminal::clear_screen()?;
             println!("Goodbye.\r");
         } else {
-            self.draw_rows();
-            self.draw_status_bar();
-            self.draw_message_bar();
+            self.draw_rows()?;
+            self.draw_status_bar()?;
+            self.draw_message_bar()?;
             Terminal::reposition_cursor(&Position {
                 x: self.cursor_position.x.saturating_sub(self.offset.x),
                 y: self.cursor_position.y.saturating_sub(self.offset.y),
-            });
+            })?;
         }
-        Terminal::show_cursor();
-        Terminal::flush()
+        Terminal::show_cursor()?;
+        Terminal::flush()?;
+        Ok(())
     }
 
     fn draw_welcome_message(&self) {
@@ -156,10 +174,10 @@ impl Editor {
         println!("{}\r", row);
     }
 
-    fn draw_rows(&self) {
+    fn draw_rows(&self) -> Result<(), Error> {
         let height = self.terminal.size().height;
         for terminal_row in 0..height {
-            Terminal::clear_current_line();
+            Terminal::clear_current_line()?;
             if let Some(row) = self.document.row(terminal_row as usize + self.offset.y) {
                 self.draw_row(row);
             } else if self.document.is_empty() && terminal_row == height / 3 {
@@ -168,6 +186,7 @@ impl Editor {
                 println!("~\r");
             }
         }
+        Ok(())
     }
 
     fn scroll(&mut self) {
@@ -187,7 +206,7 @@ impl Editor {
         }
     }
 
-    fn move_cursor(&mut self, key: Key) {
+    fn move_cursor(&mut self, key: KeyCode) {
         let terminal_height = self.terminal.size().height as usize;
         let Position { mut y, mut x } = self.cursor_position;
         let height = self.document.len();
@@ -197,13 +216,13 @@ impl Editor {
             0
         };
         match key {
-            Key::Up => y = y.saturating_sub(1),
-            Key::Down => {
+            KeyCode::Up => y = y.saturating_sub(1),
+            KeyCode::Down => {
                 if y < height {
                     y = y.saturating_add(1);
                 }
             }
-            Key::Left => {
+            KeyCode::Left => {
                 if x > 0 {
                     x -= 1;
                 } else if y > 0 {
@@ -215,7 +234,7 @@ impl Editor {
                     }
                 }
             }
-            Key::Right => {
+            KeyCode::Right => {
                 if x < width {
                     x += 1;
                 } else if y < height {
@@ -223,22 +242,22 @@ impl Editor {
                     x = 0;
                 }
             }
-            Key::PageUp => {
+            KeyCode::PageUp => {
                 y = if y > terminal_height {
                     y - terminal_height
                 } else {
                     0
                 }
             }
-            Key::PageDown => {
+            KeyCode::PageDown => {
                 y = if y.saturating_add(terminal_height) < height {
                     y + terminal_height
                 } else {
                     height
                 }
             }
-            Key::Home => x = 0,
-            Key::End => x = width,
+            KeyCode::Home => x = 0,
+            KeyCode::End => x = width,
             _ => (),
         }
         width = if let Some(row) = self.document.row(y) {
@@ -252,7 +271,7 @@ impl Editor {
         self.cursor_position = Position { x, y }
     }
 
-    fn draw_status_bar(&self) {
+    fn draw_status_bar(&self) -> Result<(), Error> {
         let mut status;
         let width = self.terminal.size().width as usize;
         let mut file_name = "[No name]".to_string();
@@ -266,24 +285,27 @@ impl Editor {
             status.push_str(&" ".repeat(width - status.len()));
         }
         status.truncate(width);
-        Terminal::set_bg_color(STATUS_BG_COLOR);
-        Terminal::set_fg_color(STATUS_FG_COLOR);
+        Terminal::set_bg_color(STATUS_BG_COLOR)?;
+        Terminal::set_fg_color(STATUS_FG_COLOR)?;
         println!("{}\r", status);
-        Terminal::reset_fg_color();
-        Terminal::reset_bg_color();
+        Terminal::reset_fg_color()?;
+        Terminal::reset_bg_color()?;
+        Ok(())
     }
 
-    fn draw_message_bar(&self) {
-        Terminal::clear_current_line();
+    fn draw_message_bar(&self) -> Result<(), Error> {
+        Terminal::clear_current_line()?;
         let message = &self.status_message;
         if Instant::now() - message.time < Duration::new(5, 0) {
             let mut text = message.text.clone();
             text.truncate(self.terminal.size().width as usize);
             print!("{}", text);
         }
+        Ok(())
     }
 }
 
+#[allow(unused_must_use)] // The program is already panicking, we don't need to interrupt it.
 fn die(e: std::io::Error) {
     Terminal::clear_screen();
     panic!("{}", e);

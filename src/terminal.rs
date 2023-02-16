@@ -18,7 +18,7 @@ pub struct Terminal {
 impl Terminal {
     /// # Errors
     /// Returns an error if terminal size cannot be retrieved or raw mode cannot be enabled.
-    pub fn default() -> Result<Self, Error> {
+    pub fn new() -> Result<Self, Error> {
         let size = termion::terminal_size()?;
         Ok(Self {
             size: Size {

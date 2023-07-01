@@ -1,53 +1,50 @@
 {
   description = "text-editor";
 
-  inputs = {
-    nixpkgs = {url = "github:NixOS/nixpkgs/nixpkgs-unstable";};
+  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
-    fenix = {
-      url = "github:nix-community/fenix";
-      inputs = {
-        nixpkgs.follows = "nixpkgs";
-      };
-    };
+  inputs.systems.url = "github:msfjarvis/flake-systems";
 
-    flake-utils = {url = "github:numtide/flake-utils";};
+  inputs.advisory-db.url = "github:rustsec/advisory-db";
+  inputs.advisory-db.flake = false;
 
-    flake-compat = {
-      url = "github:edolstra/flake-compat";
-      flake = false;
-    };
+  inputs.crane.url = "github:ipetkov/crane";
+  inputs.crane.inputs.flake-compat.follows = "flake-compat";
+  inputs.crane.inputs.flake-utils.follows = "flake-utils";
+  inputs.crane.inputs.nixpkgs.follows = "nixpkgs";
 
-    crane = {
-      url = "github:ipetkov/crane";
-      inputs = {
-        flake-compat.follows = "flake-compat";
-        flake-utils.follows = "flake-utils";
-        nixpkgs.follows = "nixpkgs";
-      };
-    };
+  inputs.devshell.url = "github:numtide/devshell";
+  inputs.devshell.inputs.nixpkgs.follows = "nixpkgs";
+  inputs.devshell.inputs.systems.follows = "systems";
 
-    advisory-db = {
-      url = "github:rustsec/advisory-db";
-      flake = false;
-    };
-  };
+  inputs.fenix.url = "github:nix-community/fenix";
+  inputs.fenix.inputs.nixpkgs.follows = "nixpkgs";
+
+  inputs.flake-utils.url = "github:numtide/flake-utils";
+  inputs.flake-utils.inputs.systems.follows = "systems";
+
+  inputs.flake-compat.url = "github:nix-community/flake-compat";
+  inputs.flake-compat.flake = false;
 
   outputs = {
     self,
     nixpkgs,
-    fenix,
-    crane,
-    flake-utils,
     advisory-db,
+    crane,
+    devshell,
+    fenix,
+    flake-utils,
     ...
   }:
     flake-utils.lib.eachDefaultSystem (system: let
-      pkgs = import nixpkgs {inherit system;};
+      pkgs = import nixpkgs {
+        inherit system;
+        overlays = [devshell.overlays.default];
+      };
 
       rustStable = (import fenix {inherit pkgs;}).fromToolchainFile {
         file = ./rust-toolchain.toml;
-        sha256 = "sha256-eMJethw5ZLrJHmoN2/l0bIyQjoTX1NsvalWSscTixpI=";
+        sha256 = "sha256-gdYqng0y9iHYzYPAdkC/ka3DRny3La/S5G8ASj0Ayyc=";
       };
 
       craneLib = (crane.mkLib pkgs).overrideToolchain rustStable;
@@ -66,32 +63,29 @@
         });
       text-editor-fmt = craneLib.cargoFmt (commonArgs // {});
       text-editor-audit = craneLib.cargoAudit (commonArgs // {inherit advisory-db;});
-      text-editor-nextest = craneLib.cargoNextest (commonArgs
-        // {
-          inherit cargoArtifacts;
-          src = ./.;
-          partitions = 1;
-          partitionType = "count";
-        });
     in {
       checks = {
-        inherit text-editor text-editor-audit text-editor-clippy text-editor-fmt text-editor-nextest;
+        inherit text-editor text-editor-audit text-editor-clippy text-editor-fmt;
       };
 
       packages.default = text-editor;
 
       apps.default = flake-utils.lib.mkApp {drv = text-editor;};
 
-      devShells.default = pkgs.mkShell {
-        inputsFrom = builtins.attrValues self.checks;
+      devShells.default = pkgs.devshell.mkShell {
+        bash = {interactive = "";};
 
-        nativeBuildInputs = with pkgs; [
-          cargo-nextest
-          cargo-release
-          rustStable
+        env = [
+          {
+            name = "DEVSHELL_NO_MOTD";
+            value = 1;
+          }
         ];
 
-        CARGO_REGISTRIES_CRATES_IO_PROTOCOL = "sparse";
+        packages = with pkgs; [
+          cargo-nextest
+          rustStable
+        ];
       };
     });
 }

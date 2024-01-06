@@ -7,5 +7,5 @@ license = "MIT/Apache-2.0"
 
 [dependencies]
 anyhow = "1.0.78"
-termion = "2.0.3"
+termion = "3.0.0"
 unicode-segmentation = "1.10.1"
